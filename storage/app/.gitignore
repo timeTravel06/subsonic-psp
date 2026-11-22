@@ -3,4 +3,5 @@
 !public/
 !radios/
 !radios/stations.json
+!radios/radio.png
 !.gitignore
