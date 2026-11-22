@@ -43,18 +43,18 @@ final readonly class Playlist
     /**
      * Build the full playlist returned by getPlaylist.
      *
-     * Entries whose song payload is missing point at files that have been
-     * removed from the library, or at podcast episodes; they are dropped here
-     * because there is nothing to hand to the PSP.
+     * Older Subsonic servers wrap every entry in a "song" key; current Navidrome
+     * versions put the track itself in "entry". Both shapes are accepted. An
+     * entry without an identifier and a title points at a file that is no longer
+     * in the library, so it is dropped because there is nothing to hand to the
+     * PSP.
      *
      * @param  array<string, mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {
         $songs = collect($payload['entry'] ?? [])
-            ->map(fn (array $entry): ?Song => isset($entry['song'])
-                ? Song::fromArray($entry['song'])
-                : null)
+            ->map(fn (mixed $entry): ?Song => self::songFromEntry($entry))
             ->filter()
             ->values();
 
@@ -67,6 +67,21 @@ final readonly class Playlist
             duration: (int) ($payload['duration'] ?? 0),
             songs: $songs,
         );
+    }
+
+    private static function songFromEntry(mixed $entry): ?Song
+    {
+        if (! is_array($entry)) {
+            return null;
+        }
+
+        $song = isset($entry['song']) && is_array($entry['song'])
+            ? $entry['song']
+            : $entry;
+
+        return isset($song['id'], $song['title'])
+            ? Song::fromArray($song)
+            : null;
     }
 
     /**

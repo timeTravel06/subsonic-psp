@@ -270,8 +270,10 @@ final class SubsonicApi
                 }
 
                 foreach (($payload['entry'] ?? []) as $entry) {
-                    if (isset($entry['song'])) {
-                        $songs[(string) $entry['song']['id']] = $entry['song'];
+                    $song = isset($entry['song']) ? $entry['song'] : $entry;
+
+                    if (isset($song['id'], $song['title'])) {
+                        $songs[(string) $song['id']] = $song;
                     }
                 }
             }

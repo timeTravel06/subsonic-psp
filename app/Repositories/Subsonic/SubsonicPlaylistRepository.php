@@ -12,6 +12,12 @@ final class SubsonicPlaylistRepository implements PlaylistRepository
 {
     private const string LIST_CACHE_KEY = 'navidrome:playlists:index';
 
+    /**
+     * Changes with the shape of a cached playlist so that entries written by an
+     * older build are ignored after a deployment.
+     */
+    private const string DETAIL_CACHE_PREFIX = 'navidrome:playlist:v2:';
+
     public function __construct(private readonly SubsonicClient $client) {}
 
     public function all(): Collection
@@ -40,7 +46,7 @@ final class SubsonicPlaylistRepository implements PlaylistRepository
             return null;
         }
 
-        $key = "navidrome:playlist:{$playlistId}";
+        $key = self::DETAIL_CACHE_PREFIX.$playlistId;
 
         $playlist = Cache::remember($key, config('navidrome.cache.playlist'), function () use ($playlistId): ?Playlist {
             $response = $this->client->getOrNull('getPlaylist', ['id' => $playlistId]);

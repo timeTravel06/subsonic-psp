@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
 use Tests\Support\SubsonicApi;
 
 it('serves a playlist feed with an enclosure per entry', function (): void {
@@ -13,6 +14,40 @@ it('serves a playlist feed with an enclosure per entry', function (): void {
     expect(feedItems($response))->toHaveCount(2)
         ->and((string) feedChannel($response)->title)->toBe('Playlist di prova')
         ->and(feedEnclosures($response)[1]['url'])->toMatch('#^http://localhost:8000/audio/sg-2\?v=[a-f0-9]{12}$#');
+});
+
+it('serves a playlist whose entries are plain OpenSubsonic songs', function (): void {
+    $playlist = SubsonicApi::playlist();
+    $playlist['entry'] = SubsonicApi::songs(2);
+
+    SubsonicApi::fake(playlists: [$playlist]);
+
+    $response = $this->get('/feeds/playlists/pl-1');
+
+    expect(feedItems($response))->toHaveCount(2)
+        ->and(feedEnclosures($response)[1]['url'])->toMatch('#^http://localhost:8000/audio/sg-2\?v=[a-f0-9]{12}$#');
+
+    $url = feedEnclosures($response)[0]['url'];
+    $audioPath = (string) parse_url($url, PHP_URL_PATH).'?'.(string) parse_url($url, PHP_URL_QUERY);
+
+    $this->get($audioPath)->assertOk();
+});
+
+it('drops plain entries that point at a file which is no longer there', function (): void {
+    $playlist = SubsonicApi::playlist();
+    $playlist['entry'] = [...SubsonicApi::songs(1), ['id' => 999]];
+
+    SubsonicApi::fake(playlists: [$playlist]);
+
+    expect(feedItems($this->get('/feeds/playlists/pl-1')))->toHaveCount(1);
+});
+
+it('ignores playlist details cached by an older build', function (): void {
+    Cache::put('navidrome:playlist:pl-1', SubsonicApi::playlist(), 3600);
+
+    SubsonicApi::fake(playlists: [SubsonicApi::playlist(SubsonicApi::songs(2))]);
+
+    expect(feedItems($this->get('/feeds/playlists/pl-1')))->toHaveCount(2);
 });
 
 it('drops entries that point at a file which is no longer there', function (): void {
