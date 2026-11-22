@@ -85,3 +85,6 @@ Route::get('radios/{station}/stream', [RadioStreamController::class, 'show'])->n
 // Also ends in .jpg for the same reason as the cover thumbnail: the PSP reads
 // the item image only from a URL that names an image file.
 Route::get('radios/{station}/icon.jpg', [RadioIconController::class, 'show'])->name('radios.icon.show');
+// The channel icon is shared by the whole radio feed, not by one station. The
+// source file lives next to the station list and needs the same re-encoding.
+Route::get('radios/channel-icon.jpg', [RadioIconController::class, 'channel'])->name('radios.channel-icon.show');

@@ -45,7 +45,7 @@ final class RadioFeedService
             view: 'feeds.rss',
             description: $this->describe($stations->count(), $part),
             language: 'it',
-            image: '',
+            image: $this->urls->radioChannelIcon(),
             format: 'rss',
         );
     }

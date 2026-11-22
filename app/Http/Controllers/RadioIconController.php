@@ -39,6 +39,29 @@ class RadioIconController extends Controller
         return $this->image($jpeg, 'image/jpeg');
     }
 
+    /**
+     * Serve the image of the radio feed channel.
+     *
+     * The file lives beside the station list, which is a bind mount on the
+     * server, and is re-encoded like the station icons because the PSP reads
+     * only JPEGs from an image URL.
+     */
+    public function channel(): Response
+    {
+        $path = dirname((string) config('radios.file')).'/radio.png';
+        $bytes = @file_get_contents($path);
+
+        $jpeg = is_string($bytes)
+            ? $this->thumbnailer->jpegFromBytes($bytes)
+            : null;
+
+        if ($jpeg === null) {
+            abort(404);
+        }
+
+        return $this->image($jpeg, 'image/jpeg');
+    }
+
     private function image(string $bytes, string $contentType): Response
     {
         return response($bytes, 200, [

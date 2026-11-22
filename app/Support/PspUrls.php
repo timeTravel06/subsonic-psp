@@ -109,4 +109,12 @@ final class PspUrls
     {
         return route('radios.icon.show', ['station' => $stationId]);
     }
+
+    /**
+     * The image of the radio feed channel, as opposed to the station thumbnails.
+     */
+    public function radioChannelIcon(): string
+    {
+        return route('radios.channel-icon.show');
+    }
 }
